@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2D5AA6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Correio">
 <title>Correio do Jardim</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Nunito:wght@400;600;700;800&display=swap">
@@ -20,6 +28,8 @@
   --red:#EE7B70; --blue:#86A9EA; --green:#6CC58E; --green-bg:#173A27; --amber:#F0B65E; --amber-bg:#3A2C14;
   --grey-bg:#262F35; --red-bg:#3D1F1D; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 .wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:0 calc(100px + env(safe-area-inset-bottom,0px))}
 .stripe{height:8px;background:repeating-linear-gradient(-45deg,var(--red) 0 14px,var(--paper) 14px 22px,var(--blue) 22px 36px,var(--paper) 36px 44px)}
@@ -112,6 +122,9 @@ input[type=search],input[type=number],textarea,select{font:inherit;width:100%;pa
 .welcome p{margin:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+</head>
+<body>
+
 
 <div class="stripe" aria-hidden="true"></div>
 <div class="wrap">
@@ -480,3 +493,6 @@ document.getElementById("resetBox").addEventListener("click",e=>{
 });
 render();
 </script>
+
+</body>
+</html>
