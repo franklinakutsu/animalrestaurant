@@ -144,7 +144,7 @@ nav.tabs button[aria-selected="true"] .ic{background:var(--blue-bg)}
   <section class="panel" id="p-list">
     <div>
       <h2>Todas as cartas</h2>
-      <p class="lead">Marque ✓ nas cartas que você já tem. Toque no título de uma coluna para ordenar.</p>
+      <p class="lead">Marque ✓ nas cartas que você já tem. A lista está em ordem alfabética; toque no título de uma coluna para ordenar de outro jeito.</p>
     </div>
     <div class="tools">
       <input type="search" id="q" placeholder="Buscar carta ou personagem (ex.: Cici)" autocomplete="off">
@@ -171,9 +171,7 @@ nav.tabs button[aria-selected="true"] .ic{background:var(--blue-bg)}
       <thead><tr>
         <th class="c-chk sticky1">✓</th>
         <th class="sticky2 sort" data-sort="name">Nome</th>
-        <th class="sort" data-sort="cat">Categoria</th>
         <th>Slot 1</th><th>Slot 2</th><th>Slot 3</th>
-        <th class="sort" data-sort="bonus">Bônus</th>
         <th class="sort" data-sort="via">Como conseguir</th>
         <th class="sort" data-sort="event">Evento</th>
         <th>Pré-requisito</th>
@@ -188,7 +186,7 @@ nav.tabs button[aria-selected="true"] .ic{background:var(--blue-bg)}
     <div class="box">
       <h2>Como funciona</h2>
       <ol class="steps">
-        <li>A tabela junta as páginas <b>Letters</b> e <b>Letter Tracking</b> da wiki: combinação (slots), bônus, como conseguir, evento, pré-requisitos e o que cada carta desbloqueia.</li>
+        <li>A tabela junta as páginas <b>Letters</b> e <b>Letter Tracking</b> da wiki: combinação (slots), como conseguir, evento, pré-requisitos e o que cada carta desbloqueia.</li>
         <li>Marque ✓ nas cartas que você já tem.</li>
         <li>Na coluna Pré-requisito, marque os personagens e receitas que você já desbloqueou. Vale para todas as cartas que pedem o mesmo.</li>
       </ol>
@@ -306,9 +304,7 @@ function fullRow(l){
   return `<tr class="${S.got[l.name]?'done':''}">
     <td class="c-chk sticky1">${chk(l)}</td>
     <td class="name sticky2"><b>${esc(label(l.name))}</b></td>
-    <td>${esc(l.cat)}</td>
     ${slotCells(l)}
-    <td style="white-space:nowrap">${bonusTxt(l)}</td>
     <td>${esc(VIA_TXT(l.via))}</td>
     <td>${eventTxt(l)}</td>
     <td>${preCell(l)}</td>
@@ -355,8 +351,8 @@ function renderGarden(){
 }
 
 // ---- list tab ----
-let fStatus="todo", page=1, sortKey=null, sortDir=1;
-const PER=25;
+let fStatus="todo", page=1, sortKey="name", sortDir=1;
+const PER=100000;
 const FILTERS=[["todo","Faltando"],["done","Recebidas"],["all","Todas"]];
 const SORTS={name:l=>label(l.name).toLowerCase(), cat:l=>l.cat.toLowerCase(), bonus:l=>l.bonus, via:l=>VIA_TXT(l.via).toLowerCase(), event:l=>(l.event||"~").toLowerCase()};
 function renderList(){
@@ -372,9 +368,9 @@ function renderList(){
   });
   if(sortKey){ const f=SORTS[sortKey]; arr=[...arr].sort((a,b)=>{ const x=f(a),y=f(b); return (x<y?-1:x>y?1:ORDER[a.name]-ORDER[b.name])*sortDir; }); }
   const pages=Math.max(1,Math.ceil(arr.length/PER)); if(page>pages) page=pages;
-  document.getElementById("list").innerHTML = arr.length ? arr.slice((page-1)*PER,page*PER).map(fullRow).join("") : `<tr><td colspan="11" class="empty">Nenhuma carta com esse filtro.</td></tr>`;
+  document.getElementById("list").innerHTML = arr.length ? arr.slice((page-1)*PER,page*PER).map(fullRow).join("") : `<tr><td colspan="9" class="empty">Nenhuma carta com esse filtro.</td></tr>`;
   const a=(page-1)*PER+1, b=Math.min(arr.length,page*PER);
-  document.getElementById("listCount").textContent = arr.length ? (arr.length>PER?`${arr.length} cartas · ${a}–${b}`:`${arr.length} carta${arr.length>1?'s':''}`) : "";
+  document.getElementById("listCount").textContent = arr.length ? `${arr.length} carta${arr.length>1?'s':''}` : "";
   document.getElementById("listPager").innerHTML = pages>1 ? `<div class="pager"><button class="chip" data-pg="${page-1}" ${page<=1?"disabled":""}>‹ Anterior</button><span>Página ${page} de ${pages}</span><button class="chip" data-pg="${page+1}" ${page>=pages?"disabled":""}>Próxima ›</button></div>` : "";
 }
 
@@ -401,7 +397,7 @@ document.addEventListener("click",e=>{
   if(u){ const n=u.dataset.unl; if(S.unl[n]){ delete S.unl[n]; toast("Desmarcado: "+n); } else { S.unl[n]=1; const c=LETTERS.filter(l=>l.preUnlocks.some(x=>x.split(" or ").includes(n))).length; toast(`${n} marcado (vale para ${c} carta${c>1?'s':''})`); } save(); render(); return; }
   const m=e.target.closest("[data-more]"); if(m){ const k=m.dataset.more; opened.has(k)?opened.delete(k):opened.add(k); renderGarden(); return; }
   const f=e.target.closest("[data-f]"); if(f){ fStatus=f.dataset.f; page=1; renderList(); return; }
-  const s=e.target.closest("th[data-sort]"); if(s){ const k=s.dataset.sort; if(sortKey===k){ if(sortDir>0) sortDir=-1; else { sortKey=null; sortDir=1; } } else { sortKey=k; sortDir=k==="bonus"?-1:1; } page=1; renderList(); return; }
+  const s=e.target.closest("th[data-sort]"); if(s){ const k=s.dataset.sort; if(sortKey===k){ if(sortDir>0) sortDir=-1; else { sortKey="name"; sortDir=1; } } else { sortKey=k; sortDir=1; } page=1; renderList(); return; }
   const p=e.target.closest("[data-pg]"); if(p&&!p.disabled){ page=+p.dataset.pg; renderList(); const y=document.getElementById("listCount").getBoundingClientRect().top+window.scrollY-16; window.scrollTo({top:Math.max(0,y)}); return; }
 });
 document.getElementById("q").addEventListener("input",()=>{ page=1; renderList(); });
