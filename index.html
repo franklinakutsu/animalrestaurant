@@ -188,6 +188,19 @@ nav.tabs button[aria-selected="true"] .ic{background:var(--blue-bg)}
     <div id="listPager"></div>
   </section>
 
+  <section class="panel" id="p-cust" hidden>
+    <div>
+      <h2>Clientes</h2>
+      <p class="lead">Os clientes que você já tem no jogo. Para incluir um novo, digite o nome como aparece no jogo e toque em Adicionar.</p>
+    </div>
+    <div class="tools">
+      <input type="search" id="cq" placeholder="Buscar cliente" autocomplete="off">
+      <form id="cAdd" class="row-btns" style="flex-wrap:nowrap"><input type="text" id="cNew" placeholder="Nome do novo cliente" autocomplete="off" style="flex:1;min-width:0;font:inherit;padding:11px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"><button class="btn" type="submit">Adicionar</button></form>
+      <span class="count" id="cCount"></span>
+    </div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th class="c-chk">✓</th><th style="text-align:left">Cliente</th></tr></thead><tbody id="cList"></tbody></table></div>
+  </section>
+
   <section class="panel" id="p-more" hidden>
     <div class="box">
       <h2>Como funciona</h2>
@@ -211,6 +224,7 @@ nav.tabs button[aria-selected="true"] .ic{background:var(--blue-bg)}
 
 <nav class="tabs" role="tablist">
   <button role="tab" id="t-list" aria-selected="true" data-tab="list"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 9v11"/></svg></span>Cartas</button>
+  <button role="tab" id="t-cust" aria-selected="false" data-tab="cust"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.6-.3 4.8 1.4 5.5 4.4"/></svg></span>Clientes</button>
   <button role="tab" id="t-more" aria-selected="false" data-tab="more"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Ajustes</button>
 </nav>
 <div class="toast" id="toast" hidden></div>
@@ -244,14 +258,16 @@ firebase.initializeApp({
 });
 const DOC=firebase.firestore().collection("progress").doc("fernanda");
 const toObj=a=>Object.fromEntries((a||[]).map(n=>[n,1]));
-const seedState=()=>({got:toObj(SEED), unl:toObj(UNL_SEED_1), rating:SEED_RATING});
-let S={got:{},unl:{},rating:SEED_RATING}, loaded=false, saveT, pending=false;
+// 210 clientes lidos dos prints de 17/10 (bate com o contador do jogo: 210/462)
+const CUST_SEED_1 = ["White Bunny", "Brown Bunny", "Deer", "Mouse", "Striped Yellow Jackal", "Badger", "Rich Kid", "Spotted Deer", "Artist Badger", "Wounded Bear", "Hedgehog", "Ad Salesman", "Brown Wolf", "Striped Jackal", "Blueberry Hedgehog", "Sheep", "Cod-stealing Rabbit", "Yellow Jackal", "Swan", "Wolf", "Scarred Bear", "Granny Wolf", "Border Collie", "Skunk", "Rascal's Mom", "Christmas Elf", "Fortuneteller", "Cowherd", "Weaver Girl", "Dani", "Boar", "Snowball 2", "Black Shiba", "Terrier", "Field Dog", "Wandering Singer", "Ostrich", "White Shiba", "Paper Bagged Ostrich", "Berry Hedgehog", "Chocolate Lab", "Rascal", "Rascal's Dad", "French Bulldog", "Bald Sheep", "Lop-Eared Rabbit", "Otter", "One-Eyed Papillon", "Raccoon", "Card-Playing Mouse", "Mister Roach", "Chacha", "Flamingo", "Gnome", "Mushroom Sloth", "Tiger", "Cheshire Cat", "Fennec Fox", "Penguin", "Dachshund", "Rescue Dog", "Polar Bear", "Felicity Nvwa", "Otter Dodo", "Luckyhoof", "Mochi", "Pug", "Corgi", "Speckled Pig", "Husky", "Mysterious Merchant", "Tri-Colored Corgi", "Pig", "Old Collie", "Alpaca", "Adventurer Stoat", "Beancurd", "Rice Cake", "Scotch Collie", "Programmer's Dog", "Party Puppy", "Green-Hat Gnome", "Lucky Pig", "Harpy Eagle Wizard", "Golden Retriever", "White Mouse", "Fancy Rat", "Grandpa Spirit Bear", "Dracula", "Longevity Fox", "Bouncy the Pika", "Chihuahua", "Brown Chihuahua", "Black & White Chihuahua", "Rose", "Love-filled Buns", "Ice Cream Stall", "Reverie Cotton Candy", "Slum Cotton Candy", "Stray Wild Panda", "Scavenging Skinny Dog", "Golden Fried Potatoes", "American Hot Dog", "Candied Hawthorn", "Traditional Bowl Pudding", "Traditional Popcorn", "Portrait Drawing Booth", "Sketch Artist", "Picnicking Rabbit", "Picnicking Duck", "Beancurd Dessert", "Prosperity Pineapple", "Wholegrain Pancake", "Bowl Pudding", "Gloomy", "Taowu", "Another Roujiamo", "Sticky Rice Balls", "Ink Calligraphy", "Aaron Herbs", "Street Stall Hiring", "Summer Iced Jelly", "Rainbow Shop Stationery", "Love Tribe", "Professional Protectors", "Egg Waffle", "Tailor Liu", "Fried Quail Eggs", "Flora's Ring Toss", "Terrible Pancake", "Wholesale Wild Mushrooms", "Laughter Club", "Colorful Balloons", "Phantom Car", "Soul-Carving Booth", "Gingerbread Man's Bar Cart", "All-knowing Magic Mirror", "Cutie White Bunny", "Cutie Hamster", "Cutie Goose", "Cutie Guru", "Little Piggy Angel", "Little Turtle Angel", "Little Yorkie Angel", "Little Shiba Angel", "Bassist Toad", "Guitarist Toad", "Vocalist Toad", "Mr. Bear's Woodblocks", "Aero's Sliced Noodles", "Leisure Golf", "Aromatic Cheese Shop", "Mint Chocolate Cones", "Antique Clock Repairs", "Marcus", "Pretty Face", "Drunken Rouge", "Exquisite Jade", "Princess Feather", "Rat-a-tat", "Dingle-dangle", "Ta-da-da", "Thump-thump", "DJ Wolf", "Piano Contender", "Bamboo Hand Fan", "Natural Comedian", "Chopper", "Probiotic Panther", "Frisky Pangolin", "Zippy Koala", "Sweetie Curly", "DuBond", "Louise", "Danielle", "Drummer Toad", "Vocalist Samoyed", "Guitarist Husky", "Bassist Border Collie", "Accompanist Penguin", "Lead Dancer Slim White Dog", "Lead Singer Dalmatian", "Rapper Bean", "Leader Scotch Collie", "Leader Pug", "Guitarist Jackal", "Bassist Brown Wolf", "Aurora Polar Bear", "Aurora Arctic Hare", "Aurora Fuzzy", "Aurora Sheep", "Trainee Mingo", "Trainee Stripey", "Snowwalker", "Minty Star", "Frosty Star", "Pudding Star", "Dancing Flamingo", "Dancing Wild Duck", "Backing Vocalist Beaver", "Soloist Beaver", "Accompanist Beaver", "Backup Dancer Beaver", "Aaron", "Belle", "Ella", "Chris", "Windrider", "Moondancer", "Cloudmaster"];
+const seedState=()=>({got:toObj(SEED), unl:toObj(UNL_SEED_1), cust:toObj(CUST_SEED_1), rating:SEED_RATING});
+let S={got:{},unl:{},cust:{},rating:SEED_RATING}, loaded=false, saveT, pending=false;
 function setStatus(s){ const el=document.getElementById("sync"); el.dataset.s=s; el.textContent={load:"Carregando…",saving:"Salvando…",ok:"Salvo na nuvem",err:"Erro ao salvar"}[s]; }
 function save(){
   if(!loaded) return;
   setStatus("saving"); pending=true; clearTimeout(saveT);
   saveT=setTimeout(()=>{
-    DOC.set({got:Object.keys(S.got), unl:Object.keys(S.unl), rating:S.rating, unlSeed2:true, updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+    DOC.set({got:Object.keys(S.got), unl:Object.keys(S.unl), customers:Object.keys(S.cust), rating:S.rating, unlSeed2:true, custSeed1:true, updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
       .then(()=>{ pending=false; setStatus("ok"); }).catch(()=>{ pending=false; setStatus("err"); toast("Não consegui salvar. Confira a internet."); });
   },400);
 }
@@ -395,8 +411,15 @@ function renderMore(){ document.getElementById("rating").value=S.rating||""; }
 // ---- shell ----
 let tab="list";
 function header(){ const d=LETTERS.filter(l=>S.got[l.name]).length; document.getElementById("cnt").textContent=d+"/"+LETTERS.length; document.getElementById("barfill").style.width=(d/LETTERS.length*100)+"%"; }
-function render(){ if(!loaded) return; header(); if(tab==="list") renderList(); else renderMore(); }
-function setTab(t){ tab=t; ["list","more"].forEach(k=>{ document.getElementById("p-"+k).hidden=k!==t; document.getElementById("t-"+k).setAttribute("aria-selected",k===t); }); render(); window.scrollTo({top:0}); }
+function renderCust(){
+  const q=document.getElementById("cq").value.trim().toLowerCase();
+  const all=Object.keys(S.cust).sort((a,b)=>a.localeCompare(b));
+  const arr=all.filter(n=>!q||n.toLowerCase().includes(q));
+  document.getElementById("cCount").textContent = q ? `${arr.length} de ${all.length} clientes` : `${all.length} clientes salvos`;
+  document.getElementById("cList").innerHTML = arr.length ? arr.map(n=>`<tr><td class="c-chk"><button class="chk" aria-pressed="true" aria-label="Remover ${esc(n)}" data-cust="${esc(n)}">✓</button></td><td class="name" style="max-width:none"><b>${esc(n)}</b></td></tr>`).join("") : `<tr><td colspan="2" class="empty">Nenhum cliente com esse nome.</td></tr>`;
+}
+function render(){ if(!loaded) return; header(); if(tab==="list") renderList(); else if(tab==="cust") renderCust(); else renderMore(); }
+function setTab(t){ tab=t; ["list","cust","more"].forEach(k=>{ document.getElementById("p-"+k).hidden=k!==t; document.getElementById("t-"+k).setAttribute("aria-selected",k===t); }); render(); window.scrollTo({top:0}); }
 let tt; function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.hidden=false; clearTimeout(tt); tt=setTimeout(()=>t.hidden=true,2400); }
 
 document.querySelector("nav.tabs").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(b) setTab(b.dataset.tab); });
@@ -407,6 +430,11 @@ document.addEventListener("click",e=>{
     else { S.got[n]=1; const un=LETTERS.filter(l=>l.preLetters.includes(n)&&!S.got[l.name]&&info(l).kind!=="waiting").map(l=>label(l.name));
       toast(un.length?`Recebida! Liberou: ${un.join(", ")}`:`Recebida: ${label(n)}`); }
     save(); render(); return; }
+  const c=e.target.closest("[data-cust]");
+  if(c){ const n=c.dataset.cust;
+    if(c.dataset.confirm){ delete S.cust[n]; save(); renderCust(); toast("Removido: "+n); }
+    else { c.dataset.confirm="1"; c.textContent="✕"; c.setAttribute("aria-label","Toque de novo para remover "+n); toast("Toque de novo para remover "+n); setTimeout(()=>{ if(c.isConnected){ delete c.dataset.confirm; c.textContent="✓"; } },3000); }
+    return; }
   const u=e.target.closest("[data-unl]");
   if(u){ const n=u.dataset.unl; if(S.unl[n]){ delete S.unl[n]; toast("Desmarcado: "+n); } else { S.unl[n]=1; const c=LETTERS.filter(l=>l.preUnlocks.some(x=>x.split(" or ").includes(n))).length; toast(`${n} marcado (vale para ${c} carta${c>1?'s':''})`); } save(); render(); return; }
   const m=e.target.closest("[data-more]"); if(m){ const k=m.dataset.more; opened.has(k)?opened.delete(k):opened.add(k); renderGarden(); return; }
@@ -416,6 +444,10 @@ document.addEventListener("click",e=>{
 });
 document.getElementById("q").addEventListener("input",()=>{ page=1; renderList(); });
 ["fsec","fvia"].forEach(id=>document.getElementById(id).addEventListener("change",()=>{ page=1; renderList(); }));
+document.getElementById("cq").addEventListener("input",renderCust);
+document.getElementById("cAdd").addEventListener("submit",e=>{ e.preventDefault(); const inp=document.getElementById("cNew"); const n=inp.value.trim().replace(/\s+/g," "); if(!n) return;
+  const ex=Object.keys(S.cust).find(x=>x.toLowerCase()===n.toLowerCase()); if(ex){ toast(ex+" já está na lista"); return; }
+  S.cust[n]=1; inp.value=""; save(); renderCust(); toast("Adicionado: "+n); });
 document.getElementById("rating").addEventListener("input",e=>{ S.rating=Math.max(0,parseInt(e.target.value||"0",10)||0); save(); header(); });
 document.getElementById("resetBox").addEventListener("click",e=>{
   const box=document.getElementById("resetBox");
@@ -427,8 +459,11 @@ resetIdle();
 document.getElementById("list").innerHTML=`<tr><td colspan="9" class="empty">Carregando suas cartas…</td></tr>`;
 DOC.onSnapshot(snap=>{
   if(snap.metadata.hasPendingWrites || pending) return;  // ignore echoes of our own writes and anything that arrives mid-save
-  if(snap.exists){ const d=snap.data(); S={got:toObj(d.got), unl:toObj(d.unl), rating:typeof d.rating==="number"?d.rating:SEED_RATING}; loaded=true; setStatus("ok");
-    if(!d.unlSeed2){ UNL_SEED_1.forEach(n=>S.unl[n]=1); save(); }
+  if(snap.exists){ const d=snap.data(); S={got:toObj(d.got), unl:toObj(d.unl), cust:toObj(d.customers), rating:typeof d.rating==="number"?d.rating:SEED_RATING}; loaded=true; setStatus("ok");
+    let mig=false;
+    if(!d.unlSeed2){ UNL_SEED_1.forEach(n=>S.unl[n]=1); mig=true; }
+    if(!d.custSeed1){ CUST_SEED_1.forEach(n=>S.cust[n]=1); mig=true; }
+    if(mig) save();
     render(); }
   else if(!loaded){ S=seedState(); loaded=true; save(); render(); }
 }, ()=>{
