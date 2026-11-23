@@ -278,7 +278,9 @@ function dot(n){ const c=ITEM_C[n]; if(!c) return ""; const bg=c[2]?`radial-grad
 const itemTxt=n=> n==="*" ? `<span class="any">*</span>` : `<span class="it">${dot(n)}${esc(n)}</span>`;
 
 // ---- logic ----
-const unlockOk=u=>u.split(" or ").some(x=>S.unl[x]);
+const unlockOk=u=>u.split(" or ").some(x=>S.unl[x]||(S.cust&&S.cust[x]));
+// todos os pré-requisitos cumpridos (cartas anteriores, personagens/receitas/pedidos e avaliação) e carta ainda não recebida
+const canGet=l=>{ if(S.got[l.name]) return false; const i=info(l); return !i.waitLetters.length && !i.lowRating && !i.missUnl.length; };
 function info(l){
   const waitLetters=l.preLetters.filter(p=>!S.got[p]);
   const lowRating=l.rating && S.rating<l.rating;
@@ -385,7 +387,7 @@ function renderGarden(){
 // ---- list tab ----
 let fStatus="todo", page=1, sortKey="name", sortDir=1;
 const PER=100000;
-const FILTERS=[["todo","Faltando"],["done","Recebidas"],["all","Todas"]];
+const FILTERS=[["todo","Faltando"],["can","Pré-requisitos ok"],["done","Recebidas"],["all","Todas"]];
 const SORTS={name:l=>label(l.name).toLowerCase(), cat:l=>l.cat.toLowerCase(), bonus:l=>l.bonus, via:l=>VIA_TXT(l.via).toLowerCase(), event:l=>(l.event||"~").toLowerCase()};
 function renderList(){
   document.getElementById("fstatus").innerHTML=FILTERS.map(([k,t])=>`<button class="chip" data-f="${k}" aria-pressed="${fStatus===k}">${t}</button>`).join("");
@@ -396,6 +398,7 @@ function renderList(){
     if(via==="none"&&l.via.length) return false;
     if(via&&via!=="none"&&!l.via.includes(via)) return false;
     if(q&&!(l.name+" "+l.cat+" "+l.preUnlocks.join(" ")).toLowerCase().includes(q)) return false;
+    if(fStatus==="can") return canGet(l);
     const d=!!S.got[l.name]; return fStatus==="all"||(fStatus==="done"?d:!d);
   });
   if(sortKey){ const f=SORTS[sortKey]; arr=[...arr].sort((a,b)=>{ const x=f(a),y=f(b); return (x<y?-1:x>y?1:ORDER[a.name]-ORDER[b.name])*sortDir; }); }
